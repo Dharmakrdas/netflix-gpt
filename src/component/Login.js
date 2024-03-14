@@ -5,21 +5,27 @@ import { checkValidation } from "../utils/checkValidation";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  updateProfile,
 } from "firebase/auth";
 import { auth } from "../utils/firebase";
-import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addUser } from "../utils/userSlice";
+import { USER_AVATAR } from "../utils/constant";
 
 const Login = () => {
-  const Navigation = useNavigate();
+
+  const dispatch = useDispatch();
   const [isErrorMessage, setErrorMessage] = useState(null);
   const [isSignUp, setSignUp] = useState(false);
+  const name = useRef(null);
   const email = useRef(null);
   const pass = useRef(null);
+
   const signIn = () => {
-    const isValid = checkValidation(email.current.value, pass.current.value);
-    console.log(isValid);
-    setErrorMessage(isValid);
-    if (isValid !== null) return;
+    const message = checkValidation(email.current.value, pass.current.value);
+    console.log(message);
+    setErrorMessage(message);
+    if (message !== null) return;
     console.log("come down");
     if (isSignUp) {
       createUserWithEmailAndPassword(
@@ -30,9 +36,27 @@ const Login = () => {
         .then((userCredential) => {
           // Signed up
           const user = userCredential.user;
-          
+          updateProfile(user, {
+            displayName: name.current.value,
+            photoURL: USER_AVATAR,
+          })
+            .then(() => {
+              console.log("updated");
+
+              const { uid, email, displayName, photoURL } = auth.currentUser;
+              const ObjStore = {
+                userName: displayName,
+                userId: uid,
+                emailId: email,
+                photoURL: photoURL,
+              };
+              dispatch(addUser(ObjStore));
+            })
+            .catch((err) => {
+              console.log(err.message);
+            });
+
           console.log("sucessfully signup");
-          Navigation("/browse");
           // ...
         })
         .catch((error) => {
@@ -43,7 +67,7 @@ const Login = () => {
         });
     } else {
       console.log("sign in");
-      signInWithEmailAndPassword(auth,email.current.value, pass.current.value)
+      signInWithEmailAndPassword(auth, email.current.value, pass.current.value)
         .then((userCredential) => {
           // Signed in
           console.log("SUcessfully Sign IN ");
@@ -74,6 +98,14 @@ const Login = () => {
         <h1 className=" text-white text-lg w-20 font-bold m-2">
           {isSignUp ? "Sign Up" : "Sig In"}
         </h1>
+        {isSignUp && (
+          <input
+            ref={name}
+            className=" border-2 m-2 w-full rounded-sm p-2 text-neutral-500"
+            type="text"
+            placeholder="Name"
+          ></input>
+        )}
         <input
           ref={email}
           className=" border-2 m-2 w-full rounded-sm p-2 text-neutral-500"
@@ -83,7 +115,7 @@ const Login = () => {
         <input
           ref={pass}
           className=" border-2 m-2 w-full rounded-sm p-2 text-neutral-500"
-          type="text"
+          type="password"
           placeholder="Password"
         ></input>
         {isErrorMessage && (
@@ -103,7 +135,7 @@ const Login = () => {
             onClick={() => setSignUp(!isSignUp)}
             className=" text-white  text-lg"
           >
-            {isSignUp ? "Sign Up" : "Sig In"}
+            {isSignUp ? "Sign In" : "Sig Up"}
           </h1>
         </div>
       </form>
