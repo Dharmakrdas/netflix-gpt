@@ -6,12 +6,17 @@ import Login from "./Login";
 import Browser from "./Browse";
 import Optimization from "../practice/performanceApp";
 import PerformanceApp from "../practice/performance1";
+import Product from '../product';
 
 const Body = () => {
   const appRouter = createBrowserRouter([
     {
       path: "/",
       element: <Login />,
+    },
+    {
+      path:'/product',
+      element: <Product />
     },
     {
       path: "/browse",
